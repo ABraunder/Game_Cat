@@ -4,13 +4,13 @@ import time
 from pgzero.builtins import *
 
 WIDTH = 320
-HEIGHT = 416
+HEIGHT = 411
 TITLE = "Игровой котик"
 FPS = 30
 
 class Game:
     def __init__(self):
-        self.ui = Actor("ui", topup=(160, 48))
+        self.ui = Actor("ui", topup=())
         self.bg = Actor("background", center=(WIDTH / 2, HEIGHT / 2 + 48))
         self.cat = Cat()
         self.coin = Coin()
@@ -19,16 +19,19 @@ class Game:
         self.cat_target_y = self.cat.actor.y
         self.cat_animation_playing = False
         self.cat_animation_frame = 0
+        self.player_name = "None"
 
     def draw(self):
         self.ui.draw()
         self.bg.draw()
-        self.coin.draw()
-        self.cat.draw()
-        screen.draw.text("Игровой котик", bottomright=(WIDTH / 2 + 96, HEIGHT /2 - 145), color=(0,0,0), fontname=("font"))
         for cell in self.cells:
             cell.draw()
         self.update()
+        self.coin.draw()
+        self.cat.draw()
+        screen.draw.text(self.player_name, center=(self.cat.actor.x, self.cat.actor.y - 15), color=(255, 0, 0)) 
+        screen.draw.text("Игровой котик", bottomright=(WIDTH / 2 + 96, HEIGHT /2 - 145), color=(0,0,0), fontname=("font"))
+        
 
     def on_key_down(self):
         if self.cat_animation_playing == True:
