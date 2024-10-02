@@ -1,5 +1,6 @@
 import pgzrun
 import random
+import time
 from pgzero.builtins import *
 
 WIDTH = 320
@@ -16,26 +17,69 @@ class Game:
         self.cells = [Cell(i * 32, j * 32 + 96) for i in range(10) for j in range(10)]
         self.cat_target_x = self.cat.actor.x
         self.cat_target_y = self.cat.actor.y
-    
+        self.cat_animation_playing = False
+        self.cat_animation_frame = 0
+
     def draw(self):
         self.ui.draw()
         self.bg.draw()
-        self.cat.draw()
         self.coin.draw()
+        self.cat.draw()
         screen.draw.text("Игровой котик", bottomright=(WIDTH / 2 + 96, HEIGHT /2 - 145), color=(0,0,0), fontname=("font"))
         for cell in self.cells:
             cell.draw()
-            
+        self.update()
+
     def on_key_down(self):
+        if self.cat_animation_playing == True:
+            return
         if keyboard.left and self.cat.actor.x > 16:
-            self.cat.update(-32, 0)
+            self.cat_animation_playing = True
+            self.cat_animation_frame = 0
+            self.cat.direction = "left"
+            animate(self.cat.actor, tween='linear', duration=2, x=self.cat.actor.x - 32, on_finished=self.on_animation_finished)
         elif keyboard.right and self.cat.actor.x < 304:
-            self.cat.update(32, 0)
+            self.cat_animation_playing = True
+            self.cat_animation_frame = 0
+            self.cat.direction = "right"
+            animate(self.cat.actor, tween='linear', duration=2, x=self.cat.actor.x + 32, on_finished=self.on_animation_finished)
         elif keyboard.up and self.cat.actor.y > 112:
-            self.cat.update(0, -32)
+            self.cat_animation_playing = True
+            self.cat_animation_frame = 0
+            self.cat.direction = "up"
+            animate(self.cat.actor, tween='linear', duration=2, y=self.cat.actor.y - 32, on_finished=self.on_animation_finished)
         elif keyboard.down and self.cat.actor.y < 400:
-            self.cat.update(0, 32)
-        
+            self.cat_animation_playing = True
+            self.cat_animation_frame = 0
+            self.cat.direction = "down"
+            animate(self.cat.actor, tween='linear', duration=2, y=self.cat.actor.y + 32, on_finished=self.on_animation_finished)
+
+    def on_animation_finished(self):
+        self.cat_animation_playing = False
+        collision_check_result =  self.cat.actor.colliderect(self.coin.actor)
+        if collision_check_result:
+            self.coin.update()
+        if self.cat.direction == "left":
+            self.cat.actor.image = "cat_sit_left"
+        elif self.cat.direction == "right":
+            self.cat.actor.image = "cat_sit_right"
+        elif self.cat.direction == "up":
+            self.cat.actor.image = "cat_sit_up"
+        elif self.cat.direction == "down":
+            self.cat.actor.image = "cat_sit_down"
+
+    def update(self):
+        if self.cat_animation_playing:
+            self.cat_animation_frame = (self.cat_animation_frame + 1) % 3
+            time.sleep(0.1)
+            if self.cat.direction == "left":
+                self.cat.actor.image = self.cat.images_left[self.cat_animation_frame]
+            elif self.cat.direction == "right":
+                self.cat.actor.image = self.cat.images_right[self.cat_animation_frame]
+            elif self.cat.direction == "up":
+                self.cat.actor.image = self.cat.images_up[self.cat_animation_frame]
+            elif self.cat.direction == "down":
+                self.cat.actor.image = self.cat.images_down[self.cat_animation_frame]
 
 class Cat:
     def __init__(self):
@@ -73,35 +117,20 @@ class Cat:
     def update(self, dx, dy):
         self.actor.x += dx
         self.actor.y += dy
-        if dx < 0:
-            self.actor.image = self.images_left[self.frame]
-            self.direction = "left"
-        elif dx > 0:
-            self.actor.image = self.images_right[self.frame]
-            self.direction = "right"
-        elif dy < 0:
-            self.actor.image = self.images_up[self.frame]
-            self.direction = "up"
-        elif dy > 0:
-            self.actor.image = self.images_down[self.frame]
-            self.direction = "down"
-        self.frame = (self.frame + 1) % 3
-        if self.frame == 0:
-            if self.direction == "left":
-                self.actor.image = self.images_left[3]
-            elif self.direction == "right":
-                self.actor.image = self.images_right[3]
-            elif self.direction == "up":
-                self.actor.image = self.images_up[3]
-            elif self.direction == "down":
-                self.actor.image = self.images_down[3]
+
 
 class Coin:
     def __init__(self):
         self.actor = Actor("coin", center=(random.randint(0, 9) * 32 + 16, random.randint(0, 9) * 32 + 112))
+        self.coin_collect = 0
 
     def draw(self):
         self.actor.draw()
+        
+    def update(self):
+        self.actor.x = random.randint(0, 9) * 32 + 16
+        self.actor.y = random.randint(0, 9) * 32 + 112
+        self.coin_collect += 1
 
 class Cell:
     def __init__(self, x, y):
