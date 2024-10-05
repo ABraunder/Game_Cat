@@ -1,0 +1,19 @@
+<table border="1">
+    <tr>
+        <th>Место</th>
+        <th>Игрок</th>
+        <th>Дата регистрации</th>
+        <th>Монеты</th>
+    </tr>
+    {% for leader in leaders %}
+    <tr>
+        <td>{{ leader[0] }}</td>
+        <td>{{ leader[1] }}</td>
+        <td>{{ leader[2] }}</td>
+        <td>{{ leader[3] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
