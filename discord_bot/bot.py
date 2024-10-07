@@ -5,7 +5,7 @@ from discord.ui import View, Button
 import requests
 
 #  Токен бота Discord
-TOKEN = 'TOKEN'
+TOKEN = 'MTI5MTAyMzAxMDQ2NzE1MTkxMw.GhEIR8.-VVdxiUlKvGMmqmKtKxFMZNKTUBgXECdFibdcc'
 
 # Настройки интентов бота
 intents = discord.Intents.all()
@@ -70,7 +70,7 @@ async def join(ctx):
     # Получаем имя пользователя
     discord_name = ctx.author.name
     url = 'http://localhost:5000/api'
-    data = {' command': 'create_player', 'player': discord_name}
+    data = {'command': 'create_player', 'player': discord_name}
     headers = {'Content-Type': 'application/json'}
     # Отправляем POST-запрос на сервер API
     response = requests.post(url, headers=headers, json=data)

@@ -4,6 +4,7 @@ import time
 from pgzero.builtins import *
 import requests
 import threading
+import re
 
 # Размеры игрового окна
 WIDTH = 320
@@ -24,6 +25,11 @@ class Game:
         self.players = []
         music.play("music")
         music.set_volume(0.1) 
+        self.load_players()
+        
+    def load_players(self):
+        new_api_data = {'player': None, 'command': 'load_players'}
+        response = requests.post(self.url, json=new_api_data)
 
     # Метод для отрисовки игры
     def draw(self):
@@ -40,15 +46,29 @@ class Game:
         screen.draw.text("Игровой котик", center=(self.ui.x, self.ui.y), color=(0,0,0), fontname=("font"))
 
     # Метод для добавления игрока
-    def add_player(self, name):
+    def add_player(self, name, x=None, y=None):
+        # Проверка, существует ли игрок с таким именем
+        for player in self.players:
+            if player.name == name:
+                # Если игрок существует, то обновляем его координаты
+                if x is not None and y is not None:
+                    player.actor.x = x
+                    player.actor.y = y
+                return player
+
+        # Если игрок не существует, то создаем нового игрока
+        if x is None or y is None:
+            # Установка координат игрока
+            x = random.randint(0, 9) * 32 + 16
+            y = random.randint(0, 9) * 32 + 106
+
         # Создание нового игрока
         new_player = Cat(name)
-        # Установка координат игрока
-        new_player.actor.x = random.randint(0, 9) * 32 + 16
-        new_player.actor.y = random.randint(0, 9) * 32 + 106
+        new_player.actor.x = x
+        new_player.actor.y = y
         # Добавление игрока в список
         self.players.append(new_player)
-        command = f'x{new_player.actor.x}, y{new_player.actor.y}'
+        command = f'{new_player.actor.x}, {new_player.actor.y}'
         print(f'Создан кот с именем {name} на координатах {command}')
         # Отправка запроса на создание игрока
         new_api_data = {'player': name, 'command': command}
@@ -72,8 +92,32 @@ class Game:
                 player_name = data.get('player')
                 print("Функция: ", data)
                 if command is not None:
+                    if command == 'load_players':
+                        # Получение словаря игроков и их координат
+                        players = data.get('players')
+                        if players is not None:
+                            for name, coors in players.items():
+                                # Обработка строки с координатами
+                                if coors is not None:
+                                    coors_parts = coors.split(',')
+                                    if len(coors_parts) == 2:
+                                        x_str, y_str = coors_parts
+                                        x = None if x_str.lower() == 'none' else float(x_str)
+                                        y = None if y_str.lower() == 'none' else float(y_str)
+                                        self.add_player(name, x, y)
+                                        new_api_data = {'player': None, 'command': None}
+                                        response = requests.post(self.url, json=new_api_data)
+                                    else:
+                                        print(f"Неправильный формат строки с координатами: {coors}")
+                                else:
+                                    # Создание нового игрока, если координат нет
+                                    self.add_player(name, 80.0, 170.0)
+                                    new_api_data = {'player': None, 'command': None}
+                                    response = requests.post(self.url, json=new_api_data)
+                        else:
+                            print("Нет данных о игроках")
                     # Обработка команды от API
-                    if command in ['move_right','move_left','move_up','move_down']:
+                    elif command in ['move_right','move_left','move_up','move_down']:
                         # Обработка перемещения игрока
                         for player in self.players:
                             if player.name == player_name:
@@ -88,9 +132,9 @@ class Game:
                     else:
                         # Затычка
                         pass
-            else:
-                # Обработка ошибки получения данных от API
-                print('Failed to retrieve API data')
+                else:
+                    # Обработка ошибки получения данных от API
+                    print('Failed to retrieve API data')
             # Пауза между запросами
             time.sleep(1)
             
@@ -205,7 +249,7 @@ class Cat:
     # Метод для отправки координат кота
     def send_coors(self):
         # Команда для отправки координат
-        command = f'x{self.actor.x} + y{self.actor.y}'
+        command = f"{self.actor.x}, {self.actor.y}"
         print(command)
         # Отправка запроса на обновление координат
         new_api_data = {'player': self.name, 'command': command}
