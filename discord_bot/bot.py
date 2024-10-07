@@ -5,7 +5,7 @@ from discord.ui import View, Button
 import requests
 
 #  Токен бота Discord
-TOKEN = 'MTI5MTAyMzAxMDQ2NzE1MTkxMw.GhEIR8.-VVdxiUlKvGMmqmKtKxFMZNKTUBgXECdFibdcc'
+TOKEN = 'TOKEN'
 
 # Настройки интентов бота
 intents = discord.Intents.all()
